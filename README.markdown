@@ -16,6 +16,7 @@ dotnet run
 ## Debug Info
 
 ```
+curl --version
 sw_vers
 docker info
 ```
