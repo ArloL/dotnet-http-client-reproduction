@@ -26,7 +26,7 @@ try
             Console.WriteLine($"Connecting to: {selectedIp}:{endpoint.Port}");
 
             // Establish the socket connection
-            var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             await socket.ConnectAsync(selectedIp, endpoint.Port);
 
             Console.WriteLine($"Connected to {selectedIp}:{endpoint.Port} with dual mode {socket.DualMode}");
@@ -35,7 +35,7 @@ try
     };
 
     var httpClient = new HttpClient(handler);
-    var responseBody = await httpClient.GetStringAsync("http://" + host + ":" + port + endpoint);
+        var responseBody = await httpClient.GetStringAsync("http://" + host + ":" + port + endpoint);
     Console.WriteLine(responseBody);
 }
 catch (Exception ex)
