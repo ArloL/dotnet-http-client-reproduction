@@ -29,7 +29,7 @@ try
             var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             await socket.ConnectAsync(selectedIp, endpoint.Port);
 
-            Console.WriteLine($"Connected to {selectedIp}:{endpoint.Port}");
+            Console.WriteLine($"Connected to {selectedIp}:{endpoint.Port} with dual mode {socket.DualMode}");
             return new NetworkStream(socket, ownsSocket: true);
         }
     };
