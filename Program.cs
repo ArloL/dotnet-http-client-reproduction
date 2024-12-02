@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System.Net;
+using System.Net.Sockets;
 using System.Text;
 
 try
@@ -7,40 +8,35 @@ try
     int port = 52126;
     string endpoint = "/";
 
-    var httpClient = new HttpClient();
-    var responseBody = await httpClient.GetStringAsync("http://" + host + ":" + port + endpoint);
-    Console.WriteLine(responseBody);
-
-    using (var client = new TcpClient(host, port))
+    var handler = new SocketsHttpHandler
     {
-        using (var networkStream = client.GetStream())
+        ConnectCallback = async (context, token) =>
         {
-            // Prepare the HTTP GET request
-            string request = $"GET {endpoint} HTTP/1.1\r\n" +
-                                $"Host: {host}\r\n" +
-                                "Connection: close\r\n" +
-                                "\r\n";
-            byte[] requestBytes = Encoding.ASCII.GetBytes(request);
+            var endpoint = context.DnsEndPoint;
+            Console.WriteLine($"Resolving IP for host: {endpoint.Host}");
 
-            // Send the HTTP request
-            networkStream.Write(requestBytes, 0, requestBytes.Length);
-
-            // Read the server response
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            StringBuilder responseBuilder = new StringBuilder();
-
-            while ((bytesRead = networkStream.Read(buffer, 0, buffer.Length)) > 0)
+            var ipAddresses = await Dns.GetHostAddressesAsync(endpoint.Host);
+            foreach (var ip in ipAddresses)
             {
-                string responsePart = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                responseBuilder.Append(responsePart);
+                Console.WriteLine($"Resolved IP: {ip}");
             }
 
-            // Output the response
-            Console.WriteLine("Server Response:");
-            Console.WriteLine(responseBuilder.ToString());
+            // Select the first IP (or implement your own logic for IP selection)
+            var selectedIp = ipAddresses[0];
+            Console.WriteLine($"Connecting to: {selectedIp}:{endpoint.Port}");
+
+            // Establish the socket connection
+            var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            await socket.ConnectAsync(selectedIp, endpoint.Port);
+
+            Console.WriteLine($"Connected to {selectedIp}:{endpoint.Port}");
+            return new NetworkStream(socket, ownsSocket: true);
         }
-    }
+    };
+
+    var httpClient = new HttpClient(handler);
+    var responseBody = await httpClient.GetStringAsync("http://" + host + ":" + port + endpoint);
+    Console.WriteLine(responseBody);
 }
 catch (Exception ex)
 {
